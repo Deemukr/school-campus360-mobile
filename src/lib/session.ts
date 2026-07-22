@@ -60,19 +60,35 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
               userId: payload.sub || `user-${Date.now()}`,
               email: payload.email,
               name: payload.email.split("@")[0].replace(/[._]/g, " "),
-              role: meta.role || "SCHOOL_ADMIN",
+              role: (meta.role as UserRole) || "SCHOOL_ADMIN",
               tenantId: meta.tenant_id,
               token,
             });
           } else if (token.startsWith("demo_jwt_")) {
-            setSession({
-              userId: "demo-user-101",
-              email: "admin@dps.test",
-              name: "School Admin",
-              role: "SCHOOL_ADMIN",
-              tenantId: "d1d1d1d1-1111-1111-1111-111111111111",
-              token,
-            });
+            try {
+              const rawB64 = token.replace("demo_jwt_", "");
+              const decoded = JSON.parse(atob(rawB64));
+              const namePart = decoded.email ? decoded.email.split("@")[0].replace(/[._]/g, " ") : "Campus User";
+              const formattedName = namePart ? namePart.charAt(0).toUpperCase() + namePart.slice(1) : "Campus User";
+
+              setSession({
+                userId: decoded.userId || `user-${Date.now()}`,
+                email: decoded.email || "user@campus360.test",
+                name: formattedName,
+                role: (decoded.role as UserRole) || "SCHOOL_ADMIN",
+                tenantId: decoded.tenantId || "d1d1d1d1-1111-1111-1111-111111111111",
+                token,
+              });
+            } catch {
+              setSession({
+                userId: "demo-user-101",
+                email: "admin@dps.test",
+                name: "School Admin",
+                role: "SCHOOL_ADMIN",
+                tenantId: "d1d1d1d1-1111-1111-1111-111111111111",
+                token,
+              });
+            }
           }
         }
       } catch (err) {
@@ -133,7 +149,7 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
                 userId: payload?.sub || `user-${Date.now()}`,
                 email,
                 name: email.split("@")[0].replace(/[._]/g, " "),
-                role: meta.role || role,
+                role: (meta.role as UserRole) || role,
                 tenantId: meta.tenant_id,
                 token: accessToken,
               });
@@ -150,15 +166,22 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
       // Fast Local/Demo Session Fallback for Mobile Expo Go
       const namePart = email.split("@")[0].replace(/[._]/g, " ");
       const formattedName = namePart ? namePart.charAt(0).toUpperCase() + namePart.slice(1) : "Campus User";
-      const dummyToken = `demo_jwt_${Date.now()}`;
-      await setStoredToken(dummyToken);
-
-      setSession({
+      const dummyPayload = {
         userId: `user-${Date.now()}`,
         email,
         name: formattedName,
         role,
-        tenantId: targetTenantId,
+        tenantId: targetTenantId || "d1d1d1d1-1111-1111-1111-111111111111",
+      };
+      const dummyToken = `demo_jwt_${btoa(JSON.stringify(dummyPayload))}`;
+      await setStoredToken(dummyToken);
+
+      setSession({
+        userId: dummyPayload.userId,
+        email,
+        name: formattedName,
+        role,
+        tenantId: dummyPayload.tenantId,
         token: dummyToken,
       });
 
