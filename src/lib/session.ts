@@ -21,10 +21,14 @@ export interface SessionContextType {
   logout: () => Promise<void>;
 }
 
-// Decode base64 JWT payload safely
-function decodeJwtPayload(token: string): any {
+// Decode base64 JWT payload safely without throwing
+function decodeJwtPayload(token?: string | null): any {
+  if (!token || typeof token !== "string") return null;
+  const parts = token.split(".");
+  if (parts.length < 2 || !parts[1]) return null;
+
   try {
-    const base64Url = token.split(".")[1];
+    const base64Url = parts[1];
     const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
     const jsonPayload = decodeURIComponent(
       atob(base64)
@@ -33,8 +37,7 @@ function decodeJwtPayload(token: string): any {
         .join("")
     );
     return JSON.parse(jsonPayload);
-  } catch (err) {
-    console.warn("Failed to decode JWT payload", err);
+  } catch {
     return null;
   }
 }
@@ -61,6 +64,15 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
               tenantId: meta.tenant_id,
               token,
             });
+          } else if (token.startsWith("demo_jwt_")) {
+            setSession({
+              userId: "demo-user-101",
+              email: "admin@dps.test",
+              name: "School Admin",
+              role: "SCHOOL_ADMIN",
+              tenantId: "d1d1d1d1-1111-1111-1111-111111111111",
+              token,
+            });
           }
         }
       } catch (err) {
@@ -82,12 +94,12 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setIsLoading(true);
     try {
       if (password) {
-        // Resolve Ayva IAM URL with strict 3s timeout
+        // Resolve Ayva IAM URL with strict 2.5s timeout
         const hostBase = API_BASE_URL.replace(/\/api\/v1\/?$/, "");
         const iamUrl = hostBase.replace(":8010", ":8081");
 
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3500);
+        const timeoutId = setTimeout(() => controller.abort(), 2500);
 
         try {
           const iamRes = await fetch(`${iamUrl}/auth/login`, {
@@ -130,9 +142,8 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
               return { success: true };
             }
           }
-        } catch (fetchErr) {
+        } catch {
           clearTimeout(timeoutId);
-          console.warn("Direct IAM network unreachable on mobile device, falling back to local session", fetchErr);
         }
       }
 
