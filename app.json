@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "Campus360",
+    "slug": "school-campus360-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "scheme": "campus360",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "co.in.campus360.mobile"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0081CC"
+      },
+      "package": "co.in.campus360.mobile"
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
