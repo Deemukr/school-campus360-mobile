@@ -1,20 +1,27 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
-import { GraduationCap, Building, Mail, Lock, ArrowRight, ShieldCheck } from "lucide-react-native";
+import { GraduationCap, Building, Mail, Lock, ArrowRight, ShieldCheck, Sparkles, UserCheck } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 import { useTenant, PRESET_TENANTS } from "../lib/tenant";
 import { useSession, UserRole } from "../lib/session";
 import { CLAY_THEME } from "../lib/theme";
 import { ClayCard } from "../components/ClayCard";
 
+const DEMO_PRESETS = [
+  { label: "DPS Admin", email: "admin@dps.test", role: "SCHOOL_ADMIN" as UserRole, tenantKey: "dps-delhi" },
+  { label: "DPS Teacher", email: "teacher@dps.test", role: "TEACHER" as UserRole, tenantKey: "dps-delhi" },
+  { label: "DPS Parent", email: "parent@dps.test", role: "PARENT" as UserRole, tenantKey: "dps-delhi" },
+  { label: "Greenwood Admin", email: "admin@greenwood.test", role: "SCHOOL_ADMIN" as UserRole, tenantKey: "greenwood" },
+];
+
 export default function LoginScreen() {
   const router = useRouter();
   const { tenant, setTenantKey } = useTenant();
   const { login, isLoading } = useSession();
 
-  const [email, setEmail] = useState("principal@dpsdelhi.edu.in");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("admin@dps.test");
+  const [password, setPassword] = useState("Demo@12345");
   const [selectedRole, setSelectedRole] = useState<UserRole>("SCHOOL_ADMIN");
   const [selectedSchoolKey, setSelectedSchoolKey] = useState("dps-delhi");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -24,22 +31,34 @@ export default function LoginScreen() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setTenantKey(selectedSchoolKey);
 
-    const success = await login(email, selectedRole, password);
-    if (success) {
+    const targetTenant = PRESET_TENANTS[selectedSchoolKey];
+    const targetTenantId = targetTenant?.tenantId;
+
+    const res = await login(email, selectedRole, password, targetTenantId);
+    if (res.success) {
       router.replace("/(tabs)");
     } else {
-      setErrorMessage("Authentication failed. Please check credentials or network.");
+      setErrorMessage(res.error || "Authentication failed. Please check credentials or network.");
     }
+  };
+
+  const applyDemoPreset = (preset: typeof DEMO_PRESETS[0]) => {
+    Haptics.selectionAsync();
+    setEmail(preset.email);
+    setPassword("Demo@12345");
+    setSelectedRole(preset.role);
+    setSelectedSchoolKey(preset.tenantKey);
+    setTenantKey(preset.tenantKey);
   };
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
         <View style={[styles.logoBadge, { backgroundColor: tenant.primaryColor }]}>
-          <GraduationCap size={32} color="#FFFFFF" />
+          <GraduationCap size={34} color="#FFFFFF" />
         </View>
         <Text style={styles.title}>School-Campus360</Text>
-        <Text style={styles.subtitle}>K-12 Multi-Tenant Educational Portal</Text>
+        <Text style={styles.subtitle}>K-12 Multi-Tenant Mobile Portal</Text>
       </View>
 
       <ClayCard style={styles.card}>
@@ -48,6 +67,25 @@ export default function LoginScreen() {
             <Text style={styles.errorText}>{errorMessage}</Text>
           </View>
         ) : null}
+
+        {/* Quick Fill Demo Credentials */}
+        <Text style={styles.label}>Quick-Fill Demo Account</Text>
+        <View style={styles.demoRow}>
+          {DEMO_PRESETS.map((p) => (
+            <TouchableOpacity
+              key={p.label}
+              style={[
+                styles.demoChip,
+                email === p.email && { backgroundColor: tenant.primaryColor, borderColor: tenant.primaryColor },
+              ]}
+              onPress={() => applyDemoPreset(p)}
+            >
+              <Text style={[styles.demoChipText, email === p.email && { color: "#FFFFFF" }]}>
+                {p.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
 
         {/* 1. School Tenant Selector */}
         <Text style={styles.label}>1. Select School Branch / Tenant</Text>
@@ -65,6 +103,7 @@ export default function LoginScreen() {
                 onPress={() => {
                   Haptics.selectionAsync();
                   setSelectedSchoolKey(key);
+                  setTenantKey(key);
                 }}
               >
                 <Building size={16} color={isSelected ? data.primaryColor : "#6B7280"} />
@@ -107,7 +146,8 @@ export default function LoginScreen() {
           <Mail size={18} color={CLAY_THEME.colors.textMuted} />
           <TextInput
             style={styles.input}
-            placeholder="e.g. principal@dpsdelhi.edu.in"
+            placeholder="e.g. admin@dps.test"
+            placeholderTextColor="#9CA3AF"
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
@@ -115,12 +155,13 @@ export default function LoginScreen() {
           />
         </View>
 
-        <Text style={styles.label}>4. Security Password (Optional in Demo)</Text>
+        <Text style={styles.label}>4. Security Password</Text>
         <View style={styles.inputBox}>
           <Lock size={18} color={CLAY_THEME.colors.textMuted} />
           <TextInput
             style={styles.input}
-            placeholder="••••••••"
+            placeholder="Demo@12345"
+            placeholderTextColor="#9CA3AF"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
@@ -162,12 +203,12 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: "center",
-    marginBottom: 24,
+    marginBottom: 20,
   },
   logoBadge: {
-    width: 64,
-    height: 64,
-    borderRadius: 20,
+    width: 68,
+    height: 68,
+    borderRadius: 22,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 12,
@@ -188,16 +229,16 @@ const styles = StyleSheet.create({
   },
   errorBanner: {
     backgroundColor: "#FEE2E2",
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 12,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 14,
     borderWidth: 1,
     borderColor: "#FCA5A5",
   },
   errorText: {
     color: "#991B1B",
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: "700",
   },
   label: {
     fontSize: 13,
@@ -205,6 +246,25 @@ const styles = StyleSheet.create({
     color: CLAY_THEME.colors.textPrimary,
     marginBottom: 8,
     marginTop: 14,
+  },
+  demoRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+    marginBottom: 6,
+  },
+  demoChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: "#FAF5FF",
+    borderWidth: 1,
+    borderColor: CLAY_THEME.colors.border,
+  },
+  demoChipText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: CLAY_THEME.colors.primary,
   },
   tenantOptions: {
     gap: 8,
