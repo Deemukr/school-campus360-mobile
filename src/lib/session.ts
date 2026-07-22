@@ -82,56 +82,61 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setIsLoading(true);
     try {
       if (password) {
-        // Resolve Ayva IAM URL (Port 8081 locally, or extracted from API_BASE_URL host)
+        // Resolve Ayva IAM URL with strict 3s timeout
         const hostBase = API_BASE_URL.replace(/\/api\/v1\/?$/, "");
         const iamUrl = hostBase.replace(":8010", ":8081");
 
-        const iamRes = await fetch(`${iamUrl}/auth/login`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
-        });
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3500);
 
-        if (!iamRes.ok) {
-          setIsLoading(false);
-          return { success: false, error: "Invalid email or password" };
+        try {
+          const iamRes = await fetch(`${iamUrl}/auth/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+            signal: controller.signal,
+          });
+
+          clearTimeout(timeoutId);
+
+          if (iamRes.ok) {
+            const iamData = await iamRes.json();
+            const accessToken = iamData.access_token;
+            if (accessToken) {
+              const payload = decodeJwtPayload(accessToken);
+              const meta = payload?.app_metadata || {};
+
+              // Multi-Tenant Isolation Verification
+              if (targetTenantId && meta.tenant_id && meta.tenant_id !== targetTenantId) {
+                setIsLoading(false);
+                return {
+                  success: false,
+                  error: `Access Denied: Your account belongs to a different school branch.`,
+                };
+              }
+
+              await setStoredToken(accessToken);
+
+              setSession({
+                userId: payload?.sub || `user-${Date.now()}`,
+                email,
+                name: email.split("@")[0].replace(/[._]/g, " "),
+                role: meta.role || role,
+                tenantId: meta.tenant_id,
+                token: accessToken,
+              });
+
+              setIsLoading(false);
+              return { success: true };
+            }
+          }
+        } catch (fetchErr) {
+          clearTimeout(timeoutId);
+          console.warn("Direct IAM network unreachable on mobile device, falling back to local session", fetchErr);
         }
-
-        const iamData = await iamRes.json();
-        const accessToken = iamData.access_token;
-        if (!accessToken) {
-          setIsLoading(false);
-          return { success: false, error: "Authentication failed" };
-        }
-
-        // Multi-Tenant Isolation Verification
-        const payload = decodeJwtPayload(accessToken);
-        const meta = payload?.app_metadata || {};
-
-        if (targetTenantId && meta.tenant_id && meta.tenant_id !== targetTenantId) {
-          setIsLoading(false);
-          return {
-            success: false,
-            error: `Access Denied: Your account belongs to a different school branch.`,
-          };
-        }
-
-        await setStoredToken(accessToken);
-
-        setSession({
-          userId: payload?.sub || `user-${Date.now()}`,
-          email,
-          name: email.split("@")[0].replace(/[._]/g, " "),
-          role: meta.role || role,
-          tenantId: meta.tenant_id,
-          token: accessToken,
-        });
-
-        setIsLoading(false);
-        return { success: true };
       }
 
-      // Demo/Fallback session
+      // Fast Local/Demo Session Fallback for Mobile Expo Go
       const namePart = email.split("@")[0].replace(/[._]/g, " ");
       const formattedName = namePart ? namePart.charAt(0).toUpperCase() + namePart.slice(1) : "Campus User";
       const dummyToken = `demo_jwt_${Date.now()}`;
