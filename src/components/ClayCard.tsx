@@ -51,8 +51,8 @@ export const ClayCard: React.FC<ClayCardProps> = ({
 const styles = StyleSheet.create({
   baseCard: {
     borderRadius: CLAY_THEME.borderRadius.lg,
-    padding: 16,
-    borderWidth: 1.5,
+    padding: 18,
+    borderWidth: 3,
   },
   defaultCard: {
     backgroundColor: CLAY_THEME.colors.cardBg,

@@ -1,3 +1,5 @@
+import { UserRole } from "./session";
+
 export type Plan = "ESSENTIAL" | "PROFESSIONAL" | "ENTERPRISE";
 
 export interface ModuleDef {
@@ -12,10 +14,14 @@ export const MODULES: ModuleDef[] = [
   { key: "admissions", label: "Admissions", href: "/modules/admissions", icon: "UserPlus", description: "Lead funnel & application tracking" },
   { key: "sis", label: "Students", href: "/modules/students", icon: "Users", description: "Student profiles & directory" },
   { key: "attendance", label: "Attendance", href: "/modules/attendance", icon: "CalendarCheck", description: "Quick mobile roster marker" },
+  { key: "timetable", label: "Timetable & Events", href: "/modules/timetable", icon: "CalendarCheck", description: "Holidays, exams, and schedules" },
   { key: "fees", label: "Fees", href: "/modules/fees", icon: "Wallet", description: "Invoices, payments & concessions" },
   { key: "communication", label: "Communication", href: "/modules/communication", icon: "MessageSquare", description: "Notice board & circulars" },
   { key: "concerns", label: "Concerns", href: "/modules/concerns", icon: "MessageCircle", description: "Parent helpdesk & ticketing" },
   { key: "gradebook", label: "Grade Book", href: "/modules/gradebook", icon: "BookOpen", description: "Assessments & report cards" },
+  { key: "syllabus", label: "Classwork", href: "/modules/syllabus", icon: "BookOpen", description: "Syllabus covered for the day" },
+  { key: "homework", label: "Homework", href: "/modules/homework", icon: "CheckSquare", description: "Daily assignments and tasks" },
+  { key: "calendar", label: "Calendar", href: "/modules/calendar", icon: "CalendarCheck", description: "Academic calendar & holidays" },
   { key: "certificates", label: "Certificates", href: "/modules/certificates", icon: "Award", description: "TC, Conduct & Bonafide" },
   { key: "hr", label: "Staff & HR", href: "/modules/hr", icon: "Briefcase", description: "Staff directory & leave pass" },
   { key: "health_discipline", label: "Health & Gate Pass", href: "/modules/health", icon: "Activity", description: "Medical logs & gate passes" },
@@ -33,7 +39,7 @@ export const MODULES: ModuleDef[] = [
 ];
 
 const ESSENTIAL = [
-  "admissions", "sis", "attendance", "fees", "communication", "digital_library", "concerns", "dynamic_forms",
+  "admissions", "sis", "attendance", "fees", "communication", "digital_library", "concerns", "dynamic_forms", "timetable", "calendar", "homework", "syllabus"
 ];
 
 const PROFESSIONAL = [
@@ -50,6 +56,29 @@ export const PLAN_FEATURES: Record<Plan, string[]> = {
   ENTERPRISE,
 };
 
+export const ROLE_MODULES: Record<UserRole, string[]> = {
+  SCHOOL_SUPER_ADMIN: MODULES.map(m => m.key),
+  SCHOOL_ADMIN: MODULES.map(m => m.key),
+  PRINCIPAL: MODULES.map(m => m.key),
+  TEACHER: [
+    "sis", "attendance", "communication", "gradebook", "syllabus", "homework", "calendar",
+    "health_discipline", "learner_profile", "wellbeing", "performance_calibration"
+  ],
+  PARENT: [
+    "fees", "communication", "concerns", "certificates", "learner_profile", 
+    "transport", "hostel", "health_discipline", "gradebook", "homework", "timetable", "calendar"
+  ],
+  STUDENT: [
+    "learner_profile", "digital_library", "ai_tutor", "certificates", "transport", "wellbeing", "timetable", "calendar", "homework"
+  ]
+};
+
 export function effectiveEntitlements(plan: Plan, overrides: string[] = []): string[] {
   return Array.from(new Set([...(PLAN_FEATURES[plan] ?? ESSENTIAL), ...overrides]));
+}
+
+export function getModulesForRole(role: UserRole | undefined, entitlements: string[]): ModuleDef[] {
+  if (!role) return [];
+  const allowedForRole = ROLE_MODULES[role] || [];
+  return MODULES.filter(m => allowedForRole.includes(m.key) && entitlements.includes(m.key));
 }

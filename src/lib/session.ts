@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { apiClient, getStoredToken, setStoredToken, clearStoredToken } from "./apiClient";
 import { API_ROUTES, API_BASE_URL } from "./apiRoutes";
 
-export type UserRole = "SCHOOL_SUPER_ADMIN" | "SCHOOL_ADMIN" | "TEACHER" | "PARENT" | "STUDENT";
+export type UserRole = "SCHOOL_SUPER_ADMIN" | "SCHOOL_ADMIN" | "PRINCIPAL" | "TEACHER" | "PARENT" | "STUDENT";
 
 export interface UserSession {
   userId: string;

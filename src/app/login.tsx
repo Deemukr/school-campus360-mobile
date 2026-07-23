@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, Image } from "react-native";
 import { useRouter } from "expo-router";
 import { GraduationCap, Building, Mail, Lock, ArrowRight, ShieldCheck, Sparkles, UserCheck } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
@@ -55,7 +55,7 @@ export default function LoginScreen() {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
         <View style={[styles.logoBadge, { backgroundColor: tenant.primaryColor }]}>
-          <GraduationCap size={34} color="#FFFFFF" />
+          <Image source={require('../../assets/logo.png')} style={{ width: 48, height: 48, borderRadius: 12 }} />
         </View>
         <Text style={styles.title}>School-Campus360</Text>
         <Text style={styles.subtitle}>K-12 Multi-Tenant Mobile Portal</Text>

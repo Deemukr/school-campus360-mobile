@@ -14,10 +14,15 @@ export default function TabsLayout() {
         tabBarStyle: {
           backgroundColor: "#FFFFFF",
           borderTopWidth: 1,
-          borderTopColor: "#F3F4F6",
-          height: 64,
+          borderTopColor: "#E5E7EB",
+          minHeight: 60,
           paddingBottom: 8,
           paddingTop: 8,
+          elevation: 10,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.05,
+          shadowRadius: 10,
         },
         tabBarLabelStyle: {
           fontSize: 11,

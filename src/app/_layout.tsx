@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { View, ActivityIndicator } from "react-native";
+import { View, ActivityIndicator, Image, StyleSheet, Dimensions } from "react-native";
 import { TenantProvider } from "../lib/tenant";
 import { SessionProvider, useSession } from "../lib/session";
 import { CLAY_THEME } from "../lib/theme";
@@ -53,12 +53,14 @@ export default function RootLayout() {
                 headerTitleStyle: {
                   fontWeight: "600",
                 },
+                headerBackTitleVisible: false,
+                headerBackTitle: "",
                 animation: "slide_from_right",
               }}
             >
               <Stack.Screen name="index" options={{ headerShown: false }} />
               <Stack.Screen name="login" options={{ headerShown: false }} />
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="(tabs)" options={{ headerShown: false, title: "Home" }} />
 
               {/* Module Sub-screens */}
               <Stack.Screen name="modules/admissions" options={{ title: "Admissions Hub" }} />
@@ -81,7 +83,25 @@ export default function RootLayout() {
               <Stack.Screen name="modules/hostel" options={{ title: "Hostel & Mess" }} />
               <Stack.Screen name="modules/inventory" options={{ title: "Inventory & Assets" }} />
               <Stack.Screen name="modules/ai-dashboard" options={{ title: "AI Analytics" }} />
+              
+              {/* Added newly wired routes */}
+              <Stack.Screen name="modules/homework" options={{ title: "Daily Homework" }} />
+              <Stack.Screen name="modules/timetable" options={{ title: "Class Timetable" }} />
+              <Stack.Screen name="modules/calendar" options={{ title: "Academic Calendar" }} />
             </Stack>
+            
+            {/* Global Watermark Overlay */}
+            <View pointerEvents="none" style={[StyleSheet.absoluteFillObject, { justifyContent: 'center', alignItems: 'center', zIndex: 999 }]}>
+              <Image 
+                source={require('../../assets/logo.png')} 
+                style={{ 
+                  width: Dimensions.get('window').width * 0.8, 
+                  height: Dimensions.get('window').width * 0.8, 
+                  opacity: 0.04, 
+                  resizeMode: 'contain' 
+                }}
+              />
+            </View>
           </AuthGuard>
         </SessionProvider>
       </TenantProvider>

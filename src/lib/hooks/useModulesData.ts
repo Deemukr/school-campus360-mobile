@@ -13,9 +13,9 @@ export function useAiSummary() {
     open_concerns: 3,
     avg_performance: "88.5%",
     alerts: [
-      { id: "1", type: "WARNING", message: "Section 10-A attendance dropped below 90% today" },
-      { id: "2", type: "INFO", message: "CBSE Term 1 Mark Sheets finalized for Grade 12" },
-      { id: "3", type: "CRITICAL", message: "Bus Route #4 delayed by 15 mins (Traffic)" },
+      { id: "1", type: "WARNING", message: "Section 10-A attendance dropped below 90% today", targetRoles: ["SCHOOL_SUPER_ADMIN", "SCHOOL_ADMIN", "PRINCIPAL", "TEACHER"] },
+      { id: "2", type: "INFO", message: "CBSE Term 1 Mark Sheets finalized for Grade 12", targetRoles: ["SCHOOL_SUPER_ADMIN", "SCHOOL_ADMIN", "PRINCIPAL", "TEACHER", "PARENT", "STUDENT"] },
+      { id: "3", type: "CRITICAL", message: "Bus Route #4 delayed by 15 mins (Traffic)", targetRoles: ["SCHOOL_SUPER_ADMIN", "SCHOOL_ADMIN", "PARENT", "STUDENT"] },
     ],
   };
 
@@ -232,5 +232,62 @@ export function useCommunication() {
     error,
     refetch,
     publishAnnouncement: publishAnnouncementMutation.mutate,
+  };
+}
+
+// 11. Homework Module
+export function useHomework() {
+  const { data, loading, error, refetch } = useQuery<any[]>("/api/homework"); // Replace with actual route when ready
+
+  const fallback = [
+    { id: "HW-101", subject: "Mathematics", topic: "Algebra Equations", dueDate: "2026-07-25", status: "PENDING", description: "Solve exercises 3.1 to 3.5 in textbook." },
+    { id: "HW-102", subject: "Science", topic: "Photosynthesis", dueDate: "2026-07-24", status: "COMPLETED", description: "Draw the process diagram and label it." },
+    { id: "HW-103", subject: "English", topic: "Essay Writing", dueDate: "2026-07-26", status: "PENDING", description: "Write 500 words on 'My Role Model'." },
+  ];
+
+  return {
+    homeworkList: data && Array.isArray(data) ? data : fallback,
+    loading,
+    error,
+    refetch,
+  };
+}
+
+// 12. Timetable Module
+export function useTimetable() {
+  const { data, loading, error, refetch } = useQuery<any[]>("/api/timetable");
+
+  const fallback = [
+    { id: "TT-1", time: "08:00 AM - 08:45 AM", subject: "Mathematics", teacher: "Mr. Sharma", room: "Room 101" },
+    { id: "TT-2", time: "08:50 AM - 09:35 AM", subject: "Science", teacher: "Mrs. Gupta", room: "Lab 3" },
+    { id: "TT-3", time: "09:40 AM - 10:25 AM", subject: "English", teacher: "Ms. Allen", room: "Room 102" },
+    { id: "TT-4", time: "10:25 AM - 10:45 AM", subject: "Break", teacher: "-", room: "Cafeteria" },
+    { id: "TT-5", time: "10:45 AM - 11:30 AM", subject: "History", teacher: "Mr. Singh", room: "Room 105" },
+  ];
+
+  return {
+    timetable: data && Array.isArray(data) ? data : fallback,
+    loading,
+    error,
+    refetch,
+  };
+}
+
+// 13. Calendar Module
+export function useCalendar() {
+  const { data, loading, error, refetch } = useQuery<any[]>("/api/calendar");
+
+  const fallback = [
+    { id: "CAL-1", title: "Independence Day", date: "2026-08-15", type: "HOLIDAY" },
+    { id: "CAL-2", title: "Mid-Term Exams Begin", date: "2026-09-10", type: "ACADEMIC" },
+    { id: "CAL-3", title: "Parent-Teacher Meeting", date: "2026-09-25", type: "EVENT" },
+    { id: "CAL-4", title: "Diwali Holidays", date: "2026-11-08", type: "HOLIDAY" },
+  ];
+
+  return {
+    events: data && Array.isArray(data) ? data : fallback,
+    loading,
+    error,
+    refetch,
   };
 }
